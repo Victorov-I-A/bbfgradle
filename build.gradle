@@ -61,7 +61,7 @@ ext {
 
 dependencies {
     //Intellij core
-    implementation group: 'com.android.tools.external.com-intellij', name: 'intellij-core', version: '30.0.4'
+    implementation group: 'com.android.tools.external.com-intellij', name: 'intellij-core', version: '30.1.2'
 
     //Log
     implementation "log4j:log4j:1.2.17"
