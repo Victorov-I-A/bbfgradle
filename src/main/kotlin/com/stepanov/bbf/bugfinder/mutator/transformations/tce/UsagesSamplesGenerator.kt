@@ -3,19 +3,16 @@ package com.stepanov.bbf.bugfinder.mutator.transformations.tce
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.stepanov.bbf.bugfinder.executor.project.Project
-import com.stepanov.bbf.bugfinder.generator.targetsgenerators.FunInvocationGenerator
 import com.stepanov.bbf.bugfinder.generator.targetsgenerators.RandomInstancesGenerator
 import com.stepanov.bbf.bugfinder.mutator.transformations.Factory
 import com.stepanov.bbf.bugfinder.util.findFunByName
 import com.stepanov.bbf.bugfinder.util.getAllPSIChildrenOfType
-import com.stepanov.bbf.bugfinder.util.replaceThis
 import com.stepanov.bbf.bugfinder.generator.targetsgenerators.typeGenerators.RandomTypeGenerator
 import com.stepanov.bbf.bugfinder.util.getBoxFuncs
 import com.stepanov.bbf.reduktor.parser.PSICreator
 import org.jetbrains.kotlin.cfg.getDeclarationDescriptorIncludingConstructors
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
 import org.jetbrains.kotlin.psi.*
@@ -26,8 +23,6 @@ import org.jetbrains.kotlin.resolve.calls.callUtil.getType
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.resolve.scopes.getDescriptorsFiltered
 import org.jetbrains.kotlin.types.KotlinType
-import kotlin.math.exp
-import kotlin.random.Random
 
 object UsagesSamplesGenerator {
 
@@ -131,7 +126,7 @@ object UsagesSamplesGenerator {
         project: Project? = null,
         res: MutableList<KtExpression>
     ): List<KtExpression> {
-        val currentModule = file.getBoxFuncs()?.first().getDeclarationDescriptorIncludingConstructors(ctx)?.module
+        val currentModule = file.getAllPSIChildrenOfType<KtClass>().first().getDeclarationDescriptorIncludingConstructors(ctx)?.module
         val userClasses = if (project != null && currentModule != null) {
             StdLibraryGenerator.getUserClassesDescriptorsFromProject(project, currentModule)
         } else {

@@ -3,6 +3,7 @@ package com.stepanov.bbf.bugfinder.mutator.transformations.util
 import com.intellij.psi.PsiElement
 import com.stepanov.bbf.bugfinder.executor.project.Project
 import com.stepanov.bbf.bugfinder.generator.targetsgenerators.RandomInstancesGenerator
+
 import com.stepanov.bbf.bugfinder.mutator.transformations.Factory
 import com.stepanov.bbf.bugfinder.mutator.transformations.Factory.tryToCreateExpression
 import com.stepanov.bbf.bugfinder.mutator.transformations.Transformation
@@ -21,17 +22,17 @@ import org.jetbrains.kotlin.resolve.bindingContextUtil.getAbbreviatedTypeOrType
 import org.jetbrains.kotlin.resolve.calls.callUtil.getType
 import org.jetbrains.kotlin.resolve.scopes.getDescriptorsFiltered
 import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.isNullable
-import java.lang.StringBuilder
 import kotlin.collections.flatMap
 import kotlin.random.Random
 
 class ScopeCalculator(private val file: KtFile, private val project: Project) {
 
-    var ctx: BindingContext? = null
+    var ctx: BindingContext? = PSICreator.analyze(file, project)
+    val rig: RandomInstancesGenerator?
+        get() = ctx?.let { RandomInstancesGenerator(file, it) }
 
     fun calcScope(node: PsiElement): List<ScopeComponent> {
-        ctx = PSICreator.analyze(file, project) ?: return emptyList()
+        if (ctx == null) return emptyList()
         val res = calcVariablesAndFunctionsFromScope(node)
         //res.map { it.psiElement.text + " ${it.type} \n__________________________\n" }.forEach(::println)
         return res
@@ -153,9 +154,10 @@ class ScopeCalculator(private val file: KtFile, private val project: Project) {
                     }
                     is KtFile -> {
                         project.files
-                            .flatMap { it.psiFile.getAllPSIChildrenOfTwoTypes<KtNamedFunction, KtProperty>() }
+                            .flatMap { it.psiFile.getAllPSIChildrenOfThreeTypes<KtNamedFunction, KtProperty, KtClass>() }
                             .filter { it.isTopLevelKtOrJavaMember() }
-                            .mapNotNull { getDeclarationAndTypeForScopeComp(it) }
+                            .mapNotNull { if (it is KtClass) getParentClassScope(it, node) else getDeclarationAndTypeForScopeComp(it) }
+                            .flatten()
                     }
                     else -> emptyList()
                 }
@@ -202,7 +204,9 @@ class ScopeCalculator(private val file: KtFile, private val project: Project) {
             klass.primaryConstructor?.valueParameters?.filter {
                 if (isClassPropertyInitializer(klass, node)) true else it.isPropertyParameter()
             } ?: emptyList()
-        return (klassDeclarations + constructorProperties).mapNotNull { getDeclarationAndTypeForScopeComp(it) }
+        return (klassDeclarations + constructorProperties)
+            .mapNotNull { if (it is KtClass) getParentClassScope(it, node) else getDeclarationAndTypeForScopeComp(it) }
+            .flatten()
     }
 
     private fun isClassPropertyInitializer(klass: KtClassOrObject, node: PsiElement) =
@@ -224,7 +228,7 @@ class ScopeCalculator(private val file: KtFile, private val project: Project) {
         val type: KotlinType
     ) {
 
-        fun makeExpressionToInsertFromPsiElement(randomInstancesGenerator: RandomInstancesGenerator): ScopeComponent {
+        fun makeExpressionToInsertFromPsiElement(randomInstancesGenerator: RandomInstancesGenerator): ScopeComponent? {
             val expressionToCall =
                 when (declaration) {
                     is PropertyDescriptor -> {
@@ -240,10 +244,10 @@ class ScopeCalculator(private val file: KtFile, private val project: Project) {
                         generateCallExpr(declaration, listOf(), randomInstancesGenerator)?.text ?: ""
                     }
                     else -> {
-                        psiElement.text
+                        (psiElement as KtProperty).identifyingElement!!.text
                     }
-                }.let { Factory.psiFactory.tryToCreateExpression(it) }
-            return ScopeComponent(psiElement, declaration, type)
+                }.let { Factory.psiFactory.tryToCreateExpression(it) } ?: return null
+            return ScopeComponent(expressionToCall, declaration, type)
         }
 
         //We are not expecting typeParams
