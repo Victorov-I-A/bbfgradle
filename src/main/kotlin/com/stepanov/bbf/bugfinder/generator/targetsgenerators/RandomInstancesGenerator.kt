@@ -97,7 +97,7 @@ open class RandomInstancesGenerator(private val file: KtFile, private var ctx: B
         depth: Int = 0,
         onlyImpl: Boolean = false,
         withoutParams: Boolean = false,
-        nullIsPossible: Boolean = true
+        nullIsPossible: Boolean = false
     ): KtExpression? =
         try {
             Factory.psiFactory.createExpression(generateValueOfType(t, depth, onlyImpl, withoutParams, nullIsPossible))
@@ -126,9 +126,9 @@ open class RandomInstancesGenerator(private val file: KtFile, private var ctx: B
     fun generateValueOfType(
         t: KotlinType,
         depth: Int = 0,
-        onlyImpl: Boolean = false,
-        withoutParams: Boolean = false,
-        nullIsPossible: Boolean = true
+        onlyImpl: Boolean = true,
+        withoutParams: Boolean = true,
+        nullIsPossible: Boolean = false
     ): String {
         if (t.isUnit()) return "{}"
         if (t.isNullable() && nullIsPossible && Random.getTrue(5)) return "null"
@@ -294,7 +294,7 @@ open class RandomInstancesGenerator(private val file: KtFile, private var ctx: B
     internal val classInstanceGenerator = ClassInstanceGenerator(file, ctx)
     internal val funInvocationGenerator = FunInvocationGenerator(file, ctx)
     val randomTypeGenerator = RandomTypeGenerator
-    private val MAGIC_CONST = 15
+    private val MAGIC_CONST = 3
     private val log = Logger.getLogger("mutatorLogger")
 
 }

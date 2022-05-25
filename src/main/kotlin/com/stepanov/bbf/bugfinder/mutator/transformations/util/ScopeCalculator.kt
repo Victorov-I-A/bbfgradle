@@ -1,6 +1,9 @@
 package com.stepanov.bbf.bugfinder.mutator.transformations.util
 
 import com.intellij.psi.PsiElement
+import com.stepanov.bbf.bodygenerator.TypeTable
+import com.stepanov.bbf.bodygenerator.Utils
+import com.stepanov.bbf.bodygenerator.Utils.generatePath
 import com.stepanov.bbf.bugfinder.executor.project.Project
 import com.stepanov.bbf.bugfinder.generator.targetsgenerators.RandomInstancesGenerator
 
@@ -13,10 +16,9 @@ import com.stepanov.bbf.reduktor.util.getAllChildren
 import com.stepanov.bbf.reduktor.util.getAllChildrenWithItself
 import org.jetbrains.kotlin.cfg.getDeclarationDescriptorIncludingConstructors
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.isPropertyParameter
-import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
-import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getAbbreviatedTypeOrType
 import org.jetbrains.kotlin.resolve.calls.callUtil.getType
@@ -27,9 +29,8 @@ import kotlin.random.Random
 
 class ScopeCalculator(private val file: KtFile, private val project: Project) {
 
-    var ctx: BindingContext? = PSICreator.analyze(file, project)
-    val rig: RandomInstancesGenerator?
-        get() = ctx?.let { RandomInstancesGenerator(file, it) }
+    var ctx: BindingContext? = Utils.ProjectTools.ctx
+    val rig: RandomInstancesGenerator = Utils.ProjectTools.rig
 
     fun calcScope(node: PsiElement): List<ScopeComponent> {
         if (ctx == null) return emptyList()
@@ -165,6 +166,9 @@ class ScopeCalculator(private val file: KtFile, private val project: Project) {
                 currentLevelScope.filter { res.all { elFromResScope -> elFromResScope.psiElement.text != it.psiElement.text } }
             res.addAll(filteredByAlreadyContainedNames)
         }
+        res.filter {
+            filterNonInterestingDeclarations(it, node)
+        }.toList()
         return res.filter { filterNonInterestingDeclarations(it, node) }.toList()
     }
 
@@ -219,6 +223,23 @@ class ScopeCalculator(private val file: KtFile, private val project: Project) {
         if (psiElement is KtNamedFunction && psiElement.name?.contains("box") == true) return false
         if (psiElement is KtNamedFunction && psiElement.name?.contains("main") == true) return false
         if (psiElement in node.parents || psiElement == node) return false
+        /**
+         * Filters for function with modifiers, which using in generator was not implemented
+         */
+        if (psiElement is KtNamedFunction &&
+            (psiElement.modifierList?.hasModifier(KtTokens.INFIX_KEYWORD) != true ||
+                    psiElement.modifierList?.hasModifier(KtTokens.INLINE_KEYWORD) != true)) return false
+//        if (psiElement.parentsWithSelf.toList()
+//                .filterIsInstance<KtClass>()
+//                .firstOrNull { it.isAbstract() || it.isInterface() } != null) return false
+        if (psiElement is KtParameter && !TypeTable.userDefinedTypes
+                .map { (it.constructor.declarationDescriptor?.source?.getPsi() as KtClass).primaryConstructorParameters }
+                .flatten<KtParameter>()
+                .contains(psiElement)) return false
+        if (psiElement is KtProperty && !TypeTable.userDefinedTypes
+                .map { (it.constructor.declarationDescriptor?.source?.getPsi() as KtClass).getProperties() }
+                .flatten<KtProperty>()
+                .contains(psiElement)) return false
         return true
     }
 

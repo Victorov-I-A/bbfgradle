@@ -4,32 +4,47 @@ import com.stepanov.bbf.bodygenerator.contentgeneration.Declaration
 import com.stepanov.bbf.bodygenerator.contentgeneration.Expression
 import com.stepanov.bbf.bodygenerator.contentgeneration.Statement
 
+
 object Config {
 
-    const val BlockDepth = 2
+    const val BodySize = 2
+
+    const val BlockSize = 2
+
+    const val BlocksLevel = 2
 
     const val ExpressionDepth = 3
 
-    val AllowedTypes = listOf(
-        "Byte", "Short", "Int", "Long",
-        "Float", "Double",
-        "UByte", "UShort", "UInt", "ULong",
-        "Boolean",
-        "Char",
-        "String"
+    const val PowerOfUserDefinedTypes = 10
+
+    const val WhenEntriesSize = 2
+
+    val CollectionTypes = mapOf(
+        List::class to 1, MutableList::class to 2,
+        Set::class to 2, MutableSet::class to 1,
+        Map::class to 1, MutableMap::class to 2
+    )
+
+    val PrimitiveTypes = mapOf(
+        Byte::class to 1, Short::class to 1, Int::class to 1, Long::class to 1,
+        Float::class to 1, Double::class to 1,
+        UByte::class to 1, UShort::class to 1, UInt::class to 1, ULong::class to 1,
+        Boolean::class to 1,
+        Char::class to 1,
+        String::class to 1
     )
 
     val SingleTypeExpressions = listOf(
-        "Boolean" to (Expression.Equality::class to 1),
-        "Boolean" to (Expression.Comparison::class to 1),
-        "Boolean" to (Expression.Disjunction::class to 1),
-        "Boolean" to (Expression.Conjunction::class to 1)
+        Boolean::class to (Expression.SingleTypeExpression.Equality::class to 1),
+        Boolean::class to (Expression.SingleTypeExpression.Comparison::class to 1),
+        Boolean::class to (Expression.SingleTypeExpression.Disjunction::class to 1),
+        Boolean::class to (Expression.SingleTypeExpression.Conjunction::class to 1)
     )
 
     val MultiTypeExpression = listOf(
-        Expression.Constant::class to 1,
-        Expression.If::class to 1,
-        Expression.When::class to 1,
+        Expression.MultiTypeExpression.Constant::class to 1,
+        Expression.MultiTypeExpression.If::class to 1,
+        Expression.MultiTypeExpression.When::class to 1,
     )
 
     val Statements = listOf(

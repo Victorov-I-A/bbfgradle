@@ -23,7 +23,7 @@ import kotlin.random.Random
 internal class ClassInstanceGenerator(file: KtFile, val ctx: BindingContext) : TypeAndValueParametersGenerator(file) {
 
     private val log = Logger.getLogger("mutatorLogger")
-    private val MAX_DEPTH = 10
+    private val MAX_DEPTH = 3
 
     private fun generateInstanceOfLocalClass(
         klDescriptor: ClassDescriptor,

@@ -15,9 +15,9 @@ const val RANDOM_CONST = 5
 fun generateDefValuesAsString(type: String): String {
     return when {
         type.let { it == "UByte" || it == "UShort" || it == "UInt" || it == "ULong" } ->
-            "${generateDefValuesAsString(type.substring(1))}.to$type()".substringAfter('-')
+            "${generateDefValuesAsString(type.substring(1))}.to$type()".replace("-", "")
         type.let { it == "UByte?" || it == "UShort?" || it == "UInt?" || it == "ULong?" } ->
-            "${generateDefValuesAsString(type.substring(1))}.to$type()".substringAfter('-')
+            "${generateDefValuesAsString(type.substring(1))}.to$type()".replace("-", "")
         type == "Any" -> generateDefValuesAsString(generateRandomType())
         type == "Any?" -> generateDefValuesAsString(generateRandomType())
         type == "String" -> "\"${generateDefValuesForDefaultTypes<String>(type)}\""
@@ -26,10 +26,10 @@ fun generateDefValuesAsString(type: String): String {
         type == "Int" -> generateDefValuesForDefaultTypes<Int>(type).toString()
         type == "Double" -> generateDefValuesForDefaultTypes<Double>(type).toString()
         type == "Boolean" -> generateDefValuesForDefaultTypes<Boolean>(type).toString()
-        type == "Long" -> generateDefValuesForDefaultTypes<Long>(type).toString()
-        type == "Short" -> generateDefValuesForDefaultTypes<Short>(type).toString()
+        type == "Long" -> "(${generateDefValuesForDefaultTypes<Long>(type)}).to$type()"
+        type == "Short" -> "(${generateDefValuesForDefaultTypes<Short>(type)}).to$type()"
         type == "Char" -> "\'${generateDefValuesForDefaultTypes<Char>(type)}\'"
-        type == "Byte" -> generateDefValuesForDefaultTypes<Byte>(type).toString()
+        type == "Byte" -> "(${generateDefValuesForDefaultTypes<Byte>(type)}).to$type()"
         type == "Float" -> generateDefValuesForDefaultTypes<Float>(type).toString()+"f"
         type == "String?" -> "\"${generateDefValuesForDefaultTypes<String>(type)}\""
         type == "Int?" -> generateDefValuesForDefaultTypes<Int>(type).toString()
