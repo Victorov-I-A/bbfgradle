@@ -9,6 +9,7 @@ import com.stepanov.bbf.bugfinder.util.getFirstParentOfType
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtProperty
 
 
 typealias ScopeComponent = ScopeCalculator.ScopeComponent
@@ -16,8 +17,11 @@ typealias ScopeComponent = ScopeCalculator.ScopeComponent
 class BodyScope(val body: KtExpression, scopeCalculator: ScopeCalculator) {
     val scopeTable = ScopeTable(scopeCalculator.calcScope(body))
 
-    fun getRandomPropertyByType(type: KotlinType): String? {
-        val component = scopeTable.getComponentByType(type) ?: return null
+    fun getRandomPropertyByType(type: KotlinType, onlyVar: Boolean = false): String? {
+        val component = if (onlyVar)
+            scopeTable.getVariableByType(type) ?: return null
+        else
+            scopeTable.getComponentByType(type) ?: return null
         val expression = component.makeExpressionToInsertFromPsiElement(rig)!!.psiElement.text
         return if (scopeTable.outerScope.contains(component) &&
             component.psiElement.getFirstParentOfType<KtClass>() != body.getFirstParentOfType<KtClass>())
@@ -32,6 +36,7 @@ class BodyScope(val body: KtExpression, scopeCalculator: ScopeCalculator) {
     ) {
         private val maxLevel: Int = BlocksLevel
         private var curLevel: Int = 0
+
         fun putProperty(property: PsiElement, type: KotlinType) {
             innerScope.last().add(
                 ScopeComponent(property, type.constructor.declarationDescriptor, type)
@@ -57,6 +62,11 @@ class BodyScope(val body: KtExpression, scopeCalculator: ScopeCalculator) {
                 true
             }
         }
+
+        fun getVariableByType(type: KotlinType): ScopeComponent? =
+            filterByType(type)
+                .filter { it.psiElement is KtProperty && it.psiElement.isVar }
+                .randomOrNull()
 
         fun getComponentByType(type: KotlinType): ScopeComponent? = filterByType(type).randomOrNull()
 
