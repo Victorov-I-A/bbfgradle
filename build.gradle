@@ -159,7 +159,7 @@ application {
 }
 
 task(runBBF, dependsOn: 'classes', type: JavaExec) {
-    main = 'com.stepanov.bbf.bodygenerator.MainKt'
+    main = 'com.stepanov.bbf.generator.MainKt'
     classpath = sourceSets.main.runtimeClasspath
 }
 
