@@ -7,17 +7,17 @@ import com.stepanov.bbf.bodygenerator.contentgeneration.Statement
 
 object Config {
 
-    const val BodySize = 2
+    const val BodySize = 4
 
-    const val BlockSize = 2
+    const val BlockSize = 1
 
     const val BlocksLevel = 2
 
     const val ExpressionDepth = 3
 
-    const val PowerOfUserDefinedTypes = 10
+    var PowerOfUserDefinedTypes = 10
 
-    const val WhenEntriesSize = 2
+    const val WhenEntriesSize = 3
 
     val CollectionTypes = mapOf(
         List::class to 1, MutableList::class to 1,

@@ -2,9 +2,9 @@ package com.stepanov.bbf.bodygenerator
 
 import com.stepanov.bbf.bodygenerator.Config.BodySize
 import com.stepanov.bbf.bodygenerator.Config.ExpressionDepth
-import com.stepanov.bbf.bodygenerator.Generation.generateConstant
 import com.stepanov.bbf.bodygenerator.Utils.ProjectTools.ktFile
 import com.stepanov.bbf.bodygenerator.Generation.generateContent
+import com.stepanov.bbf.bodygenerator.Generation.generateValue
 import com.stepanov.bbf.bugfinder.mutator.transformations.Factory
 import com.stepanov.bbf.bugfinder.mutator.transformations.util.ScopeCalculator
 import com.stepanov.bbf.bugfinder.util.getAllPSIChildrenOfType
@@ -46,6 +46,6 @@ class BodyGenerator {
     fun generateReturn(scope: BodyScope, body: KtExpression): String {
         val returnType = ((body.parent as KtDeclaration)
             .getDeclarationDescriptorIncludingConstructors(Utils.ProjectTools.ctx) as CallableDescriptor).returnType!!
-        return String.format("return %s", generateConstant(scope, ExpressionDepth, returnType))
+        return String.format("return %s", generateValue(scope, ExpressionDepth, returnType))
     }
 }

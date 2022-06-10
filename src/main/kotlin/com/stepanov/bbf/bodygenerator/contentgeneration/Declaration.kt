@@ -31,12 +31,12 @@ sealed class Declaration(scope: BodyScope, depth: Int, type: KotlinType): Conten
 
         init {
             strType =
-                if (userDefinedTypes.contains(type))
+                if (userDefinedTypes.values.contains(type))
                     generateUserDefinedTypePath(type)
                 else
                     type.toString()
             this.type =
-                if (userDefinedTypes.contains(type))
+                if (userDefinedTypes.values.contains(type))
                     generateType(strType)
                 else
                     type

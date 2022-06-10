@@ -3,15 +3,12 @@ package com.stepanov.bbf.bugfinder.mutator.transformations.util
 import com.intellij.psi.PsiElement
 import com.stepanov.bbf.bodygenerator.TypeTable
 import com.stepanov.bbf.bodygenerator.Utils
-import com.stepanov.bbf.bodygenerator.Utils.generatePath
 import com.stepanov.bbf.bugfinder.executor.project.Project
 import com.stepanov.bbf.bugfinder.generator.targetsgenerators.RandomInstancesGenerator
-
 import com.stepanov.bbf.bugfinder.mutator.transformations.Factory
 import com.stepanov.bbf.bugfinder.mutator.transformations.Factory.tryToCreateExpression
 import com.stepanov.bbf.bugfinder.mutator.transformations.Transformation
 import com.stepanov.bbf.bugfinder.util.*
-import com.stepanov.bbf.reduktor.parser.PSICreator
 import com.stepanov.bbf.reduktor.util.getAllChildren
 import com.stepanov.bbf.reduktor.util.getAllChildrenWithItself
 import org.jetbrains.kotlin.cfg.getDeclarationDescriptorIncludingConstructors
@@ -166,9 +163,6 @@ class ScopeCalculator(private val file: KtFile, private val project: Project) {
                 currentLevelScope.filter { res.all { elFromResScope -> elFromResScope.psiElement.text != it.psiElement.text } }
             res.addAll(filteredByAlreadyContainedNames)
         }
-        res.filter {
-            filterNonInterestingDeclarations(it, node)
-        }.toList()
         return res.filter { filterNonInterestingDeclarations(it, node) }.toList()
     }
 
@@ -227,19 +221,34 @@ class ScopeCalculator(private val file: KtFile, private val project: Project) {
          * Filters for function with modifiers, which using in generator was not implemented
          */
         if (psiElement is KtNamedFunction &&
-            (psiElement.modifierList?.hasModifier(KtTokens.INFIX_KEYWORD) != true ||
-                    psiElement.modifierList?.hasModifier(KtTokens.INLINE_KEYWORD) != true)) return false
+            (psiElement.modifierList?.hasModifier(KtTokens.INFIX_KEYWORD) == true ||
+                    psiElement.modifierList?.hasModifier(KtTokens.INLINE_KEYWORD) == true ||
+                    psiElement.modifierList?.hasModifier(KtTokens.OVERRIDE_KEYWORD) == true ||
+                    psiElement.hasTypeParameterListBeforeFunctionName() ||
+                    psiElement.getParentOfType<KtClass>(true)?.let {
+                        TypeTable.userDefinedTypes.keys.contains(it)
+                    } == false)
+        ) return false
+
 //        if (psiElement.parentsWithSelf.toList()
 //                .filterIsInstance<KtClass>()
 //                .firstOrNull { it.isAbstract() || it.isInterface() } != null) return false
-        if (psiElement is KtParameter && !TypeTable.userDefinedTypes
+        if (psiElement is KtParameter &&
+            (psiElement.isProtected()
+                    || psiElement.modifierList?.hasModifier(KtTokens.OVERRIDE_KEYWORD) == true
+                    || !TypeTable.userDefinedTypes.values
                 .map { (it.constructor.declarationDescriptor?.source?.getPsi() as KtClass).primaryConstructorParameters }
                 .flatten<KtParameter>()
-                .contains(psiElement)) return false
-        if (psiElement is KtProperty && !TypeTable.userDefinedTypes
-                .map { (it.constructor.declarationDescriptor?.source?.getPsi() as KtClass).getProperties() }
-                .flatten<KtProperty>()
-                .contains(psiElement)) return false
+                .contains(psiElement))
+        ) return false
+        if (psiElement is KtProperty &&
+            (psiElement.isProtected() ||
+                    psiElement.modifierList?.hasModifier(KtTokens.OVERRIDE_KEYWORD) == true ||
+                    !TypeTable.userDefinedTypes.values
+                        .map { (it.constructor.declarationDescriptor?.source?.getPsi() as KtClass).getProperties() }
+                        .flatten<KtProperty>()
+                        .contains(psiElement))
+        ) return false
         return true
     }
 

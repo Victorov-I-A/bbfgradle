@@ -25,7 +25,9 @@ class BodyScope(val body: KtExpression, scopeCalculator: ScopeCalculator) {
         val expression = component.makeExpressionToInsertFromPsiElement(rig)!!.psiElement.text
         return if (scopeTable.outerScope.contains(component) &&
             component.psiElement.getFirstParentOfType<KtClass>() != body.getFirstParentOfType<KtClass>())
-                (component.psiElement.getFirstParentOfType<KtClass>()?.generatePath() ?: "") + expression
+                component.psiElement.getFirstParentOfType<KtClass>()?.let {
+                    it.generatePath() + '.' + expression
+                } ?: expression
         else
             expression
     }

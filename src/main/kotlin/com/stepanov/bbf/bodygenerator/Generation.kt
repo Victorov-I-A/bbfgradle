@@ -58,7 +58,7 @@ object Generation {
                     + MultiTypeExpression
                 .filter {
                     Expression.MultiTypeExpression.possibleTypes[it.first]!!
-                        .map { klass -> klass.key.simpleName}.contains(type.name)
+                        .map { klass -> klass.key.simpleName }.contains(type.name)
                 }
                     + AnyTypeExpression)
                 .randomContent()
@@ -84,9 +84,14 @@ object Generation {
         scope.getRandomPropertyByType(type) ?: Expression.AnyTypeExpression.Constant(scope, depth, type).generate()
 
     fun generateVariable(scope: BodyScope, depth: Int, type: KotlinType = getRandomType()): String {
-        return scope.getRandomPropertyByType(type, onlyVar = true) ?:
-        Declaration.PropertyDeclaration(scope, depth - 1, type, true).generate().let {
-            return it + "\n" + (scope.scopeTable.innerScope.last().last().psiElement as KtProperty).identifyingElement!!.text
+        return scope.getRandomPropertyByType(type, onlyVar = true) ?: Declaration.PropertyDeclaration(
+            scope,
+            depth - 1,
+            type,
+            true
+        ).generate().let {
+            return it + "\n" + (scope.scopeTable.innerScope.last()
+                .last().psiElement as KtProperty).identifyingElement!!.text
         }
     }
 
